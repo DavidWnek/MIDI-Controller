@@ -1,0 +1,10 @@
+# firmware
+firmware/build/
+# .NET
+bin/
+obj/
+*.user
+.vs/
+# misc
+.DS_Store
+Thumbs.db

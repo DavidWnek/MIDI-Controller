@@ -1,0 +1,11 @@
+﻿<Solution>
+  <Project Path="MidiPedal.Android/MidiPedal.Android.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="MidiPedal.Browser/MidiPedal.Browser.csproj" />
+  <Project Path="MidiPedal.Desktop/MidiPedal.Desktop.csproj" />
+  <Project Path="MidiPedal.iOS/MidiPedal.iOS.csproj">
+    <Deploy />
+  </Project>
+  <Project Path="MidiPedal/MidiPedal.csproj" />
+</Solution>

@@ -1,0 +1,481 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:MidiPedal.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="900"
+             x:Class="MidiPedal.Views.MainView"
+             x:DataType="vm:MainViewModel">
+  <Design.DataContext>
+    <vm:MainViewModel />
+  </Design.DataContext>
+
+  <UserControl.Resources>
+    <DataTemplate x:Key="ActionRowTemplate" x:DataType="vm:ActionViewModel">
+      <Grid ColumnDefinitions="Auto,*,*,*,Auto" Margin="0,2">
+        <ComboBox Grid.Column="0" Width="104" Margin="0,0,6,0"
+                  ItemsSource="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ActionTypeOptions}"
+                  SelectedItem="{Binding Type}" />
+        <NumericUpDown Grid.Column="1" Margin="0,0,6,0" Value="{Binding Channel}" Minimum="0" Maximum="16" Increment="1" FormatString="0"
+                       IsVisible="{Binding IsMidi}" ToolTip.Tip="Channel (0 = global)" />
+        <NumericUpDown Grid.Column="2" Margin="0,0,6,0" Value="{Binding Number}" Minimum="0" Maximum="127" Increment="1" FormatString="0"
+                       IsVisible="{Binding IsMidi}" ToolTip.Tip="CC / note / program" />
+        <NumericUpDown Grid.Column="3" Margin="0,0,6,0" Value="{Binding Value}" Minimum="0" Maximum="127" Increment="1" FormatString="0"
+                       IsVisible="{Binding HasValue}" ToolTip.Tip="Value / velocity" />
+        <ComboBox Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,6,0" HorizontalAlignment="Stretch" IsVisible="{Binding IsPage}"
+                  ItemsSource="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).PageTargetOptions}"
+                  SelectedValue="{Binding Number}" SelectedValueBinding="{Binding Value, x:DataType=vm:PageTargetOption}"
+                  DisplayMemberBinding="{Binding Label, x:DataType=vm:PageTargetOption}" />
+        <NumericUpDown Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,6,0" IsVisible="{Binding IsPreset}"
+                       Value="{Binding PresetSlot}" Minimum="1" Maximum="8" Increment="1" FormatString="'Preset slot' 0" />
+        <Button Grid.Column="4" Content="✕" Padding="8,4"
+                Command="{Binding $parent[ItemsControl].((vm:SwitchViewModel)DataContext).RemoveActionCommand}"
+                CommandParameter="{Binding}" />
+      </Grid>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="#14808080" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.h">
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+    <Style Selector="TextBlock.label">
+      <Setter Property="Opacity" Value="0.7" />
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Margin" Value="0,6,0,2" />
+    </Style>
+    <Style Selector="TextBlock.hint">
+      <Setter Property="Opacity" Value="0.6" />
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,2,0,4" />
+    </Style>
+    <Style Selector="Border.chip">
+      <Setter Property="Background" Value="#30808080" />
+      <Setter Property="CornerRadius" Value="999" />
+      <Setter Property="Padding" Value="10,4" />
+      <Setter Property="Margin" Value="0,0,6,6" />
+    </Style>
+    <Style Selector="Border.chip TextBlock">
+      <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="Expander.sub">
+      <Setter Property="Margin" Value="0,6,0,0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+    </Style>
+
+    <Style Selector="Button.page">
+      <Setter Property="Margin" Value="0,0,6,6" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.page.selected">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
+    </Style>
+    <Style Selector="Button.page.active">
+      <Setter Property="FontWeight" Value="Bold" />
+    </Style>
+
+    <Style Selector="Button.sw">
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Stretch" />
+      <Setter Property="Padding" Value="8" />
+      <Setter Property="Margin" Value="4" />
+      <Setter Property="MinHeight" Value="88" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Button.sw.selected">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
+    </Style>
+    <Style Selector="Button.sw.latched">
+      <Setter Property="Background" Value="#5040C060" />
+    </Style>
+    <Style Selector="Button.sw.down">
+      <Setter Property="Background" Value="#90FFFFFF" />
+    </Style>
+  </UserControl.Styles>
+
+  <Grid RowDefinitions="Auto,*">
+
+    <!-- ============================== header / connection ============================== -->
+    <Border Grid.Row="0" Padding="12,10" Background="#20808080">
+      <StackPanel Spacing="8">
+        <DockPanel>
+          <TextBlock Text="MidiPedal" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" DockPanel.Dock="Left" />
+          <TextBlock Text="{Binding StatusText}" HorizontalAlignment="Right" VerticalAlignment="Center"
+                     Opacity="0.8" TextWrapping="Wrap" TextAlignment="Right" Margin="12,0,0,0" />
+        </DockPanel>
+
+        <Grid ColumnDefinitions="*,Auto,Auto">
+          <ComboBox Grid.Column="0" ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}"
+                    HorizontalAlignment="Stretch" PlaceholderText="Scan for a pedal…"
+                    IsEnabled="{Binding IsDisconnected}" Margin="0,0,6,0" />
+          <Button Grid.Column="1" Content="Scan" Command="{Binding ScanCommand}"
+                  IsEnabled="{Binding IsDisconnected}" Margin="0,0,6,0" />
+          <Button Grid.Column="2" Content="Connect" Classes="accent" Command="{Binding ConnectCommand}"
+                  IsVisible="{Binding IsDisconnected}" />
+          <Button Grid.Column="2" Content="Disconnect" Command="{Binding DisconnectCommand}"
+                  IsVisible="{Binding IsConnected}" />
+        </Grid>
+
+        <WrapPanel IsVisible="{Binding IsConnected}">
+          <Border Classes="chip"><TextBlock Text="{Binding FirmwareText}" /></Border>
+          <Border Classes="chip"><TextBlock Text="{Binding UsbText}" /></Border>
+          <Border Classes="chip"><TextBlock Text="{Binding EthText}" /></Border>
+          <Border Classes="chip"><TextBlock Text="{Binding SessionsText}" /></Border>
+          <Border Classes="chip"><TextBlock Text="{Binding BleText}" /></Border>
+          <Border Classes="chip" IsVisible="{Binding BankText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding BankText, StringFormat='Bank {0}'}" />
+          </Border>
+          <Button Content="↻" Command="{Binding RefreshInfoCommand}" Padding="8,2" Margin="0,0,6,6" />
+        </WrapPanel>
+        <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="3" />
+        <ProgressBar Minimum="0" Maximum="100" Value="{Binding UpdateProgress}" IsVisible="{Binding IsUpdating}" Height="6" />
+      </StackPanel>
+    </Border>
+
+    <!-- ============================== body ============================== -->
+    <ScrollViewer Grid.Row="1">
+      <StackPanel Margin="12" Spacing="12" MaxWidth="900" HorizontalAlignment="Stretch">
+
+        <!-- device settings -->
+        <Border Classes="card">
+          <StackPanel>
+            <TextBlock Classes="h" Text="Device" />
+            <Grid ColumnDefinitions="2*,*,*">
+              <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="Name (USB, BLE, network)" />
+                <TextBox Text="{Binding DeviceName}" MaxLength="24" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="MIDI channel" />
+                <NumericUpDown Value="{Binding MidiChannel}" Minimum="1" Maximum="16" Increment="1" FormatString="0" />
+              </StackPanel>
+              <StackPanel Grid.Column="2">
+                <TextBlock Classes="label" Text="LED brightness" />
+                <NumericUpDown Value="{Binding Brightness}" Minimum="0" Maximum="255" Increment="5" FormatString="0" />
+              </StackPanel>
+            </Grid>
+
+            <Expander Classes="sub" Header="MIDI thru / merge">
+              <StackPanel>
+                <TextBlock Classes="hint" Text="Forward incoming MIDI from one port to the others. Incoming CC and program changes also update latch, radio and bank state regardless of these settings." />
+                <Grid ColumnDefinitions="*,*,*">
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Classes="label" Text="USB in →" />
+                    <CheckBox Content="DIN out" IsChecked="{Binding ThruUsbDin}" />
+                    <CheckBox Content="Network" IsChecked="{Binding ThruUsbNet}" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="1">
+                    <TextBlock Classes="label" Text="DIN in →" />
+                    <CheckBox Content="USB" IsChecked="{Binding ThruDinUsb}" />
+                    <CheckBox Content="Network" IsChecked="{Binding ThruDinNet}" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="2">
+                    <TextBlock Classes="label" Text="Network in →" />
+                    <CheckBox Content="USB" IsChecked="{Binding ThruNetUsb}" />
+                    <CheckBox Content="DIN out" IsChecked="{Binding ThruNetDin}" />
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Expander>
+
+            <Expander Classes="sub" Header="Bluetooth security">
+              <StackPanel>
+                <TextBlock Classes="hint" Text="With a passkey set, phones must pair with this 6-digit code before they can read or change the configuration. 0 leaves the pedal open. Changing it takes effect after a reboot." />
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                  <NumericUpDown Grid.Column="0" Value="{Binding BlePin}" Minimum="0" Maximum="999999" Increment="1" FormatString="000000" Margin="0,0,8,0" />
+                  <Button Grid.Column="1" Content="Forget pairings" Command="{Binding UnpairCommand}" Margin="0,0,8,0" />
+                  <Button Grid.Column="2" Content="Reboot pedal" Command="{Binding RebootCommand}" />
+                </Grid>
+              </StackPanel>
+            </Expander>
+          </StackPanel>
+        </Border>
+
+        <!-- pages + grid -->
+        <Border Classes="card">
+          <StackPanel>
+            <DockPanel>
+              <TextBlock Classes="h" Text="Pages" DockPanel.Dock="Left" />
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                <CheckBox Content="Follow pedal" IsChecked="{Binding FollowPedalPage}" FontSize="12" />
+                <Button Content="+ Page" Command="{Binding AddPageCommand}" />
+                <Button Content="Remove" Command="{Binding RemovePageCommand}" />
+              </StackPanel>
+            </DockPanel>
+
+            <ItemsControl ItemsSource="{Binding Pages}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PageViewModel">
+                  <Button Classes="page"
+                          Classes.selected="{Binding IsSelected}"
+                          Classes.active="{Binding IsActive}"
+                          Content="{Binding Title}"
+                          Command="{Binding $parent[ItemsControl].((vm:MainViewModel)DataContext).SelectPageCommand}"
+                          CommandParameter="{Binding}" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Panel IsVisible="{Binding SelectedPage, Converter={x:Static ObjectConverters.IsNotNull}}" Margin="0,6,0,0">
+            <StackPanel DataContext="{Binding SelectedPage}" x:DataType="vm:PageViewModel">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                  <TextBlock Classes="label" Text="Page name" />
+                  <TextBox Text="{Binding Name}" MaxLength="16" />
+                </StackPanel>
+                <Button Grid.Column="1" Content="Activate on pedal" VerticalAlignment="Bottom"
+                        Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ActivatePageCommand}" />
+              </Grid>
+
+              <ItemsControl ItemsSource="{Binding Switches}" Margin="0,10,0,0">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <UniformGrid Columns="3" Rows="3" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:SwitchViewModel">
+                    <Button Classes="sw"
+                            Classes.selected="{Binding IsSelected}"
+                            Classes.down="{Binding IsDown}"
+                            Classes.latched="{Binding IsLatched}"
+                            Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).SelectSwitchCommand}"
+                            CommandParameter="{Binding}">
+                      <Grid RowDefinitions="Auto,*,Auto,Auto">
+                        <Border Grid.Row="0" Height="6" CornerRadius="3" Background="{Binding Brush}" />
+                        <TextBlock Grid.Row="1" Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,6" />
+                        <TextBlock Grid.Row="2" Text="{Binding Summary}" FontSize="11" Opacity="0.7"
+                                   TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" />
+                        <TextBlock Grid.Row="3" Text="{Binding RouteSummary}" FontSize="10" Opacity="0.6"
+                                   TextAlignment="Center" HorizontalAlignment="Center"
+                                   IsVisible="{Binding RouteSummary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                      </Grid>
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
+            </Panel>
+          </StackPanel>
+        </Border>
+
+        <!-- switch editor -->
+        <Border Classes="card" IsVisible="{Binding SelectedSwitch, Converter={x:Static ObjectConverters.IsNotNull}}">
+          <StackPanel DataContext="{Binding SelectedSwitch}" x:DataType="vm:SwitchViewModel">
+            <DockPanel>
+              <TextBlock Classes="h" DockPanel.Dock="Left">
+                <Run Text="Switch " /><Run Text="{Binding Label}" />
+              </TextBlock>
+              <Button Content="Test press" HorizontalAlignment="Right"
+                      Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).TestSwitchCommand}"
+                      CommandParameter="{Binding}" />
+            </DockPanel>
+
+            <Grid ColumnDefinitions="*,*">
+              <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="Name" />
+                <TextBox Text="{Binding Name}" MaxLength="16" />
+              </StackPanel>
+              <StackPanel Grid.Column="1">
+                <TextBlock Classes="label" Text="Colour" />
+                <ComboBox ItemsSource="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ColorOptions}"
+                          SelectedValue="{Binding Color}" SelectedValueBinding="{Binding Hex, x:DataType=vm:ColorOption}"
+                          HorizontalAlignment="Stretch">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ColorOption">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Border Width="14" Height="14" CornerRadius="7" Background="{Binding Hex}" />
+                        <TextBlock Text="{Binding Name}" />
+                      </StackPanel>
+                    </DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </StackPanel>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*">
+              <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="Mode" />
+                <ComboBox ItemsSource="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ModeOptions}"
+                          SelectedItem="{Binding Mode}" HorizontalAlignment="Stretch" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" IsVisible="{Binding IsPrimaryMode}">
+                <TextBlock Classes="label" Text="Message" />
+                <ComboBox ItemsSource="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).TypeOptions}"
+                          SelectedItem="{Binding Type}" HorizontalAlignment="Stretch" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" IsVisible="{Binding IsPageMode}">
+                <TextBlock Classes="label" Text="Go to" />
+                <ComboBox ItemsSource="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).PageTargetOptions}"
+                          SelectedValue="{Binding PageTarget}" SelectedValueBinding="{Binding Value, x:DataType=vm:PageTargetOption}"
+                          DisplayMemberBinding="{Binding Label, x:DataType=vm:PageTargetOption}"
+                          HorizontalAlignment="Stretch" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" IsVisible="{Binding IsRadioMode}">
+                <TextBlock Classes="label" Text="Radio group (1-8)" />
+                <NumericUpDown Value="{Binding Group}" Minimum="1" Maximum="8" Increment="1" FormatString="0" />
+              </StackPanel>
+            </Grid>
+
+            <TextBlock Classes="hint" IsVisible="{Binding IsRadioMode}"
+                       Text="Radio: switches in the same group are mutually exclusive, like amp channels. Pressing one sends its on value and the off value of the one that was active." />
+
+            <Grid ColumnDefinitions="*,*,*,*" IsVisible="{Binding IsPrimaryMode}">
+              <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="Channel (0 = global)" />
+                <NumericUpDown Value="{Binding Channel}" Minimum="0" Maximum="16" Increment="1" FormatString="0" />
+              </StackPanel>
+              <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                <TextBlock Classes="label" Text="CC / note / program" />
+                <NumericUpDown Value="{Binding Number}" Minimum="0" Maximum="127" Increment="1" FormatString="0" />
+              </StackPanel>
+              <StackPanel Grid.Column="2" Margin="0,0,8,0" IsVisible="{Binding ShowOnValue}">
+                <TextBlock Classes="label" Text="On value / velocity" />
+                <NumericUpDown Value="{Binding OnValue}" Minimum="0" Maximum="127" Increment="1" FormatString="0" />
+              </StackPanel>
+              <StackPanel Grid.Column="3" IsVisible="{Binding ShowOffValue}">
+                <TextBlock Classes="label" Text="Off value" />
+                <NumericUpDown Value="{Binding OffValue}" Minimum="0" Maximum="127" Increment="1" FormatString="0" />
+              </StackPanel>
+            </Grid>
+
+            <StackPanel IsVisible="{Binding IsBankMode}">
+              <TextBlock Classes="hint" Text="Bank: each press steps a program-change counter for the channel and sends it. The counter is shared by all bank switches on that channel and follows incoming program changes." />
+              <Grid ColumnDefinitions="*,*,*,*,Auto">
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                  <TextBlock Classes="label" Text="Channel (0 = global)" />
+                  <NumericUpDown Value="{Binding Channel}" Minimum="0" Maximum="16" Increment="1" FormatString="0" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                  <TextBlock Classes="label" Text="Step" />
+                  <NumericUpDown Value="{Binding BankStep}" Minimum="-64" Maximum="64" Increment="1" FormatString="0" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="0,0,8,0">
+                  <TextBlock Classes="label" Text="Min" />
+                  <NumericUpDown Value="{Binding BankMin}" Minimum="0" Maximum="127" Increment="1" FormatString="0" />
+                </StackPanel>
+                <StackPanel Grid.Column="3" Margin="0,0,8,0">
+                  <TextBlock Classes="label" Text="Max" />
+                  <NumericUpDown Value="{Binding BankMax}" Minimum="0" Maximum="127" Increment="1" FormatString="0" />
+                </StackPanel>
+                <CheckBox Grid.Column="4" Content="Wrap" IsChecked="{Binding BankWrap}" VerticalAlignment="Bottom" />
+              </Grid>
+            </StackPanel>
+
+            <TextBlock Classes="label" Text="Send to" />
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <CheckBox Content="USB" IsChecked="{Binding RouteUsb}" />
+              <CheckBox Content="DIN" IsChecked="{Binding RouteDin}" />
+              <CheckBox Content="Network" IsChecked="{Binding RouteNet}" />
+            </StackPanel>
+
+            <Expander Classes="sub">
+              <Expander.Header>
+                <TextBlock><Run Text="Also send on press (macro) · " /><Run Text="{Binding Extra.Count}" /></TextBlock>
+              </Expander.Header>
+              <StackPanel>
+                <TextBlock Classes="hint" Text="Extra messages sent right after the main action, e.g. a program change plus two CCs for a full patch switch." />
+                <ItemsControl ItemsSource="{Binding Extra}" ItemTemplate="{StaticResource ActionRowTemplate}" />
+                <Button Content="+ Add message" Command="{Binding AddExtraCommand}" IsEnabled="{Binding CanAddExtra}" Margin="0,4,0,0" />
+              </StackPanel>
+            </Expander>
+
+            <Expander Classes="sub">
+              <Expander.Header>
+                <TextBlock><Run Text="Long press (0.8 s) · " /><Run Text="{Binding Hold.Count}" /></TextBlock>
+              </Expander.Header>
+              <StackPanel>
+                <TextBlock Classes="hint" Text="Fires once while the switch is held, in addition to the normal press action." />
+                <ItemsControl ItemsSource="{Binding Hold}" ItemTemplate="{StaticResource ActionRowTemplate}" />
+                <Button Content="+ Add message" Command="{Binding AddHoldCommand}" IsEnabled="{Binding CanAddHold}" Margin="0,4,0,0" />
+              </StackPanel>
+            </Expander>
+
+            <Expander Classes="sub">
+              <Expander.Header>
+                <TextBlock><Run Text="Double tap · " /><Run Text="{Binding DoubleTap.Count}" /></TextBlock>
+              </Expander.Header>
+              <StackPanel>
+                <TextBlock Classes="hint" Text="Replaces the press action on the second tap. Note: when a double tap is defined, single presses are delayed by 320 ms so the pedal can tell them apart." />
+                <ItemsControl ItemsSource="{Binding DoubleTap}" ItemTemplate="{StaticResource ActionRowTemplate}" />
+                <Button Content="+ Add message" Command="{Binding AddDoubleTapCommand}" IsEnabled="{Binding CanAddDoubleTap}" Margin="0,4,0,0" />
+              </StackPanel>
+            </Expander>
+          </StackPanel>
+        </Border>
+
+        <!-- presets -->
+        <Border Classes="card">
+          <StackPanel>
+            <DockPanel>
+              <TextBlock Classes="h" Text="Presets on the pedal" DockPanel.Dock="Left" />
+              <Button Content="↻" Command="{Binding RefreshPresetsCommand}" HorizontalAlignment="Right" Padding="8,2" />
+            </DockPanel>
+            <TextBlock Classes="hint" Text="Eight slots store whole configurations in the pedal. A switch action of type 'preset' loads one from the floor." />
+            <Grid ColumnDefinitions="*,*">
+              <ComboBox Grid.Column="0" ItemsSource="{Binding Presets}" SelectedItem="{Binding SelectedPreset}"
+                        DisplayMemberBinding="{Binding Title, x:DataType=vm:PresetSlotViewModel}" HorizontalAlignment="Stretch" Margin="0,0,8,0" />
+              <TextBox Grid.Column="1" Text="{Binding PresetName}" Watermark="Preset name" MaxLength="16" />
+            </Grid>
+            <WrapPanel Margin="0,8,0,0">
+              <Button Content="Save current config to slot" Command="{Binding SavePresetCommand}" Margin="0,0,6,6" />
+              <Button Content="Load slot" Command="{Binding LoadPresetCommand}" Margin="0,0,6,6" />
+              <Button Content="Delete slot" Command="{Binding DeletePresetCommand}" Margin="0,0,6,6" />
+            </WrapPanel>
+          </StackPanel>
+        </Border>
+
+        <!-- actions -->
+        <Border Classes="card">
+          <StackPanel>
+            <WrapPanel>
+              <Button Content="Save to pedal" Classes="accent" Command="{Binding SaveCommand}" Margin="0,0,6,6" />
+              <Button Content="Reload from pedal" Command="{Binding ReloadCommand}" Margin="0,0,6,6" />
+              <Button Content="Factory reset" Command="{Binding FactoryResetCommand}" Margin="0,0,6,6" />
+              <Button Content="Export JSON…" Click="OnExportClick" Margin="0,0,6,6" />
+              <Button Content="Import JSON…" Click="OnImportClick" Margin="0,0,6,6" />
+              <Button Content="Update firmware…" Click="OnFirmwareClick" IsEnabled="{Binding IsConnected}" Margin="0,0,6,6" />
+            </WrapPanel>
+            <TextBlock Text="Unsaved changes" Foreground="Orange" FontSize="12" IsVisible="{Binding IsDirty}" />
+            <TextBlock Text="Reboot needed to apply the new name / passkey" Foreground="Orange" FontSize="12" IsVisible="{Binding RebootNeeded}" />
+          </StackPanel>
+        </Border>
+
+        <!-- log -->
+        <Expander Header="Protocol log">
+          <StackPanel>
+            <Button Content="Clear" Command="{Binding ClearLogCommand}" HorizontalAlignment="Right" Margin="0,0,0,6" />
+            <ItemsControl ItemsSource="{Binding Log}" MaxHeight="220">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                  <TextBlock Text="{Binding}" FontFamily="Cascadia Mono,Consolas,Menlo,monospace" FontSize="11" TextWrapping="Wrap" />
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Expander>
+
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>
